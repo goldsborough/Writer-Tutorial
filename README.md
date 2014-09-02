@@ -1,4 +1,4 @@
-Writer
+Writer-Tutorial
 ======
 
-PyQt Text Editor
+PyQt text editor tutorial repository
