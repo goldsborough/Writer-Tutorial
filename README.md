@@ -1,0 +1,4 @@
+Writer
+======
+
+PyQt Text Editor
