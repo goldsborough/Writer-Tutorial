@@ -85,6 +85,11 @@ class Main(QtGui.QMainWindow):
         tableAction.setShortcut("Ctrl+T")
         tableAction.triggered.connect(table.Table(self).show)
 
+        imageAction = QtGui.QAction(QtGui.QIcon("icons/image.png"),"Insert image",self)
+        imageAction.setStatusTip("Insert image")
+        imageAction.setShortcut("Ctrl+Shift+I")
+        imageAction.triggered.connect(self.insertImage)
+
         bulletAction = QtGui.QAction(QtGui.QIcon("icons/bullet.png"),"Insert bullet List",self)
         bulletAction.setStatusTip("Insert bullet list")
         bulletAction.setShortcut("Ctrl+Shift+B")
@@ -120,6 +125,7 @@ class Main(QtGui.QMainWindow):
         self.toolbar.addAction(dateTimeAction)
         self.toolbar.addAction(wordCountAction)
         self.toolbar.addAction(tableAction)
+        self.toolbar.addAction(imageAction)
 
         self.toolbar.addSeparator()
 
@@ -149,6 +155,8 @@ class Main(QtGui.QMainWindow):
 
         for i in fontSizes:
             fontSize.addItem(i)
+
+        fontSize.setCurrentIndex(12)
 
         fontColor = QtGui.QAction(QtGui.QIcon("icons/font-color.png"),"Change font color",self)
         fontColor.triggered.connect(self.fontColor)
@@ -541,6 +549,27 @@ class Main(QtGui.QMainWindow):
         wc.getText()
 
         wc.show()
+
+    def insertImage(self):
+
+        # Get image file name
+        filename = QtGui.QFileDialog.getOpenFileName(self, 'Insert image',".","Images (*.png *.xpm *.jpg *.bmp *.gif)")
+
+        # Create image object
+        image = QtGui.QImage(filename)
+
+        # Error if unloadable
+        if image.isNull():
+
+            errorDialog = QtGui.QErrorMessage()
+
+            errorDialog.showMessage("Failed to open image")
+
+        else:
+
+            cursor = self.text.textCursor()
+
+            cursor.insertImage(image,filename)
 
     def fontFamily(self,font):
         self.text.setCurrentFont(font)
