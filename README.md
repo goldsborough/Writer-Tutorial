@@ -3,7 +3,7 @@ Writer-Tutorial
 
 ![Image of Writer](http://www.binpress.com/images/uploads/35937/writer.png)
 
-This repository holds the code for my tutorial series on __*Developing a PyQt text editor*__, where I outline the process of creating a rich-text editor using the Python binding for Qt, PyQt. The editor includes features for:
+This repository holds the code for my tutorial series on __*Building a text editor with PyQt*__, where I outline the process of creating a rich-text editor using the Python binding for Qt, PyQt. The editor includes features for:
 
 + File management
 + Rich-text formatting
