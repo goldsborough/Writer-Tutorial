@@ -10,6 +10,6 @@ This repository holds the code for my tutorial series on __*Developing a PyQt te
 + Inserting images
 + And more!
 
-##Tutorials:
+##Tutorials
 
 Part 1: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-one/143
