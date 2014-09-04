@@ -483,7 +483,7 @@ Image insertion does not require a class of its own, so we'll stick around `writ
 
     self.toolbar.addAction(imageAction)
 
-And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a file in the very beginning, from which we retrieve a file name. With it, :
+And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a file in the very beginning, from which we retrieve a file name. If we got one, we create a `QImage` and, if it was loadable (`isNull` == False), insert it using our `QTextCursor`'s `insertImage` method. If it wasn't loadable, we pop up an error dialog:
 
     def insertImage(self):
 
