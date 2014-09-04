@@ -239,11 +239,15 @@ __Further below__:
 
     self.toolbar.addAction(self.findAction)
 
+__In `initMenubar()`__:
+
+    edit.addAction(self.findAction)
+
 Woah! That was a lot! No worries, I'll explain everything.
 
 First, the easy stuff. In `ext/__init__.py`, we inserted the only line this file will ever hold: `__all__ = ["find"]`. This enables us to import from our `ext` package using the asterix symbol (`*`), which imports all modules that are inside `__all__`. Therefore, at the top of `writer.py`, we can now write `from ext import *`, which is currently equivalent to `from ext import find`, but will turn a lot handier once we have more modules in our package.
 
-Further down in `writer.py`, more precisely in our toolbar initialization method, `initToolbar()`, we, as we've done many times for our text editor, create a `QAction`, set up a status tip as well as a shortcut and also connect the `triggered` signal to a function. In this case, all we need to do is create an instance of the `Find` class (which I'll get to in a bit) and call its `show()` method. Fortunately, this all fits into one line and doesn't require us to create a separate method.
+Further down in `writer.py`, more precisely in our toolbar initialization method, `initToolbar()`, we, as we've done many times for our text editor, create a `QAction`, set up a status tip as well as a shortcut and also connect the `triggered` signal to a function. In this case, all we need to do is create an instance of the `Find` class (which I'll get to in a bit) and call its `show()` method. Fortunately, this all fits into one line and doesn't require us to create a separate method. In `initMenubar()`, we add this action to the `edit` menu.
 
 ### Initializing the UI
 
@@ -483,7 +487,7 @@ Image insertion does not require a class of its own, so we'll stick around `writ
 
     self.toolbar.addAction(imageAction)
 
-And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a file in the very beginning, from which we retrieve a file name. If we got one, we create a `QImage` and, if it was loadable (`isNull` == False), insert it using our `QTextCursor`'s `insertImage` method. If it wasn't loadable, we pop up an error dialog:
+And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a file in the very beginning, from which we retrieve a file name. Note that for the file dialog's filter, we include common image formats. If we got a file name, we create a `QImage` and, if it was loadable (`isNull` == False), insert it using our `QTextCursor`'s `insertImage` method. If it wasn't loadable, we pop up an error dialog:
 
     def insertImage(self):
 
@@ -505,3 +509,281 @@ And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` di
             cursor = self.text.textCursor()
 
             cursor.insertImage(image,filename)
+
+## Counting words
+
+For the next extension, a word-count dialog, we'll create a new class in a separate file again. So, in
+
+__`ext/wordcount.py`__:
+
+    from PyQt4 import QtGui, QtCore
+    from PyQt4.QtCore import Qt
+
+    class WordCount(QtGui.QDialog):
+        def __init__(self,parent = None):
+            QtGui.QDialog.__init__(self, parent)
+
+            self.parent = parent
+
+            self.initUI()
+
+        def initUI(self):
+
+            # Word count in selection
+            currentLabel = QtGui.QLabel("Current selection",self)
+            currentLabel.setStyleSheet("font-weight:bold; font-size: 15px;")
+
+            currentWordsLabel = QtGui.QLabel("Words: ", self)
+            currentSymbolsLabel = QtGui.QLabel("Symbols: ",self)
+
+            self.currentWords = QtGui.QLabel(self)
+            self.currentSymbols = QtGui.QLabel(self)
+
+            # Total word/symbol count
+            totalLabel = QtGui.QLabel("Total",self)
+            totalLabel.setStyleSheet("font-weight:bold; font-size: 15px;")
+
+            totalWordsLabel = QtGui.QLabel("Words: ", self)
+            totalSymbolsLabel = QtGui.QLabel("Symbols: ",self)
+
+            self.totalWords = QtGui.QLabel(self)
+            self.totalSymbols = QtGui.QLabel(self)
+
+            # Layout
+
+            layout = QtGui.QGridLayout(self)
+
+            layout.addWidget(currentLabel,0,0)
+
+            layout.addWidget(currentWordsLabel,1,0)
+            layout.addWidget(self.currentWords,1,1)
+
+            layout.addWidget(currentSymbolsLabel,2,0)
+            layout.addWidget(self.currentSymbols,2,1)
+
+            spacer = QtGui.QWidget()
+            spacer.setFixedSize(0,5)
+
+            layout.addWidget(spacer,3,0)
+
+            layout.addWidget(totalLabel,4,0)
+
+            layout.addWidget(totalWordsLabel,5,0)
+            layout.addWidget(self.totalWords,5,1)
+
+            layout.addWidget(totalSymbolsLabel,6,0)
+            layout.addWidget(self.totalSymbols,6,1)
+
+            self.setWindowTitle("Word count")
+            self.setGeometry(300,300,200,200)
+
+        def getText(self):
+
+            # Get the text currently in selection
+            text = self.parent.text.textCursor().selectedText()
+
+            # Split the text to get the word count
+            words = str(len(text.split()))
+
+            # And just get the length of the text for the symbols
+            # count
+            symbols = str(len(text))
+
+            self.currentWords.setText(words)
+            self.currentSymbols.setText(symbols)
+
+            # For the total count, same thing as above but for the
+            # total text
+
+            text = self.parent.text.toPlainText()
+
+            words = str(len(text.split()))
+            symbols = str(len(text))
+
+            self.totalWords.setText(words)
+            self.totalSymbols.setText(symbols)
+
+__And in `__init__.py`__:
+
+    __all__ = ["find","wordcount"]
+
+
+__Back to `writer.py`. In `initToolbar()`__:
+
+    wordCountAction = QtGui.QAction(QtGui.QIcon("icons/count.png"),"See word/symbol count",self)
+    wordCountAction.setStatusTip("See word/symbol count")
+    wordCountAction.setShortcut("Ctrl+W")
+    wordCountAction.triggered.connect(self.wordCount)
+
+    self.toolbar.addAction(wordCountAction)
+
+__Below `initUI()`__:
+
+    def wordCount(self):
+
+        wc = wordcount.WordCount(self)
+
+        wc.getText()
+
+        wc.show()
+
+This dialog will show the user the number of words and symbols currently under selection (if there is a selection) and also the number of words and symbols in the overall text. The UI is fairly simple. We create labels that indicate whether the numbers shown are for the current selection or the whole text, `currentLabel` and `totalLabel`, as well as two labels each that hold the strings "Words:" and "Symbols:", plus two labels each in which we'll show the actual numbers (these must be class members):
+
+        # Word count in selection
+        currentLabel = QtGui.QLabel("Current selection",self)
+        currentLabel.setStyleSheet("font-weight:bold; font-size: 15px;")
+
+        currentWordsLabel = QtGui.QLabel("Words: ", self)
+        currentSymbolsLabel = QtGui.QLabel("Symbols: ",self)
+
+        self.currentWords = QtGui.QLabel(self)
+        self.currentSymbols = QtGui.QLabel(self)
+
+        # Total word/symbol count
+        totalLabel = QtGui.QLabel("Total",self)
+        totalLabel.setStyleSheet("font-weight:bold; font-size: 15px;")
+
+        totalWordsLabel = QtGui.QLabel("Words: ", self)
+        totalSymbolsLabel = QtGui.QLabel("Symbols: ",self)
+
+        self.totalWords = QtGui.QLabel(self)
+        self.totalSymbols = QtGui.QLabel(self)
+
+We put them into a layout and set the dialog's geometry and window title:
+
+        # Layout
+
+        layout = QtGui.QGridLayout(self)
+
+        layout.addWidget(currentLabel,0,0)
+
+        layout.addWidget(currentWordsLabel,1,0)
+        layout.addWidget(self.currentWords,1,1)
+
+        layout.addWidget(currentSymbolsLabel,2,0)
+        layout.addWidget(self.currentSymbols,2,1)
+
+        spacer = QtGui.QWidget()
+        spacer.setFixedSize(0,5)
+
+        layout.addWidget(spacer,3,0)
+
+        layout.addWidget(totalLabel,4,0)
+
+        layout.addWidget(totalWordsLabel,5,0)
+        layout.addWidget(self.totalWords,5,1)
+
+        layout.addWidget(totalSymbolsLabel,6,0)
+        layout.addWidget(self.totalSymbols,6,1)
+
+        self.setWindowTitle("Word count")
+        self.setGeometry(300,300,200,200)
+
+The function that will count all of these words and symbols is `getText()`. First, we want to count the words and symbols of the selected text, which we get by grabbing our `QTextEdit`'s `QTextCursor` and calling its `selectedText()` method. If there is any, we use the `split()` method of the retrieved string and count its content, which is then the number of words. The number of symbols is simply the length of the entire string. If there was no selected text in the first place, the returned string would be empty and thus all counts would be zero, which we want in that case. We then visualize the two numbers we just got using the respective labels' `setText()` method. We repeat this process for the whole text and again set the counts we retrieved to the respective labels' text:
+
+        def getText(self):
+
+            # Get the text currently in selection
+            text = self.parent.text.textCursor().selectedText()
+
+            # Split the text to get the word count
+            words = str(len(text.split()))
+
+            # And just get the length of the text for the symbols
+            # count
+            symbols = str(len(text))
+
+            self.currentWords.setText(words)
+            self.currentSymbols.setText(symbols)
+
+            # For the total count, same thing as above but for the
+            # total text
+
+            text = self.parent.text.toPlainText()
+
+            words = str(len(text.split()))
+            symbols = str(len(text))
+
+            self.totalWords.setText(words)
+            self.totalSymbols.setText(symbols)
+
+In `writer.py`, we again create a `QAction` for our word count dialog and add it to the toolbar. In the slot function, `self.wordCount()`, we create an instance of our `WordCount` class, call its `getText()` method and finally show the dialog.
+
+## Inserting time and date
+
+The time and date dialog will be very simple. Create a new file in `ext` and call it `datetime.py`.
+
+__In `ext/datetime.py`__:
+
+    from PyQt4 import QtGui, QtCore
+    from PyQt4.QtCore import Qt
+
+    from time import strftime
+
+    class DateTime(QtGui.QDialog):
+        def __init__(self,parent = None):
+            QtGui.QDialog.__init__(self, parent)
+
+            self.parent = parent
+
+            self.initUI()
+
+        def initUI(self):
+
+            self.form = QtGui.QComboBox(self)
+
+            # Display the different time formats
+            self.form.addItem(strftime("%A, %d. %B %Y %H:%M"))
+            self.form.addItem(strftime("%A, %d. %B %Y"))
+            self.form.addItem(strftime("%d. %B %Y %H:%M"))
+            self.form.addItem(strftime("%d.%m.%Y %H:%M"))
+            self.form.addItem(strftime("%d. %B %Y"))
+            self.form.addItem(strftime("%d %m %Y"))
+            self.form.addItem(strftime("%d.%m.%Y"))
+            self.form.addItem(strftime("%x"))
+            self.form.addItem(strftime("%X"))
+            self.form.addItem(strftime("%H:%M"))
+
+            insert = QtGui.QPushButton("Insert",self)
+            insert.clicked.connect(self.insert)
+
+            cancel = QtGui.QPushButton("Cancel",self)
+            cancel.clicked.connect(self.close)
+
+            layout = QtGui.QGridLayout()
+
+            layout.addWidget(self.form,0,0,1,2)
+            layout.addWidget(insert,1,0)
+            layout.addWidget(cancel,1,1)
+
+            self.setGeometry(300,300,400,80)
+            self.setWindowTitle("Date and Time")
+            self.setLayout(layout)
+
+        def insert(self):
+
+            # Grab cursor
+            cursor = self.parent.text.textCursor()
+
+            # Insert the comboBox's current text
+            cursor.insertText(self.form.currentText())
+
+            # Close the window
+            self.close()
+
+
+__In `ext/__init__.py`__:
+
+    __all__ = ["find","wordcount","datetime"]
+
+__Back to `writer.py`. In `initToolbar()`__:
+
+        dateTimeAction = QtGui.QAction(QtGui.QIcon("icons/calender.png"),"Insert current date/time",self)
+        dateTimeAction.setStatusTip("Insert current date/time")
+        dateTimeAction.setShortcut("Ctrl+D")
+        dateTimeAction.triggered.connect(datetime.DateTime(self).show)
+
+        self.toolbar.addAction(dateTimeAction)
+
+
+As

@@ -15,7 +15,7 @@ class DateTime(QtGui.QDialog):
  
         self.form = QtGui.QComboBox(self)
 
-        # Display the different time self.formats 
+        # Display the different time formats 
         self.form.addItem(strftime("%A, %d. %B %Y %H:%M"))
         self.form.addItem(strftime("%A, %d. %B %Y"))
         self.form.addItem(strftime("%d. %B %Y %H:%M"))
