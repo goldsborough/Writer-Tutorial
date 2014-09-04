@@ -555,21 +555,23 @@ class Main(QtGui.QMainWindow):
         # Get image file name
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Insert image',".","Images (*.png *.xpm *.jpg *.bmp *.gif)")
 
-        # Create image object
-        image = QtGui.QImage(filename)
+        if filename:
+            
+            # Create image object
+            image = QtGui.QImage(filename)
 
-        # Error if unloadable
-        if image.isNull():
+            # Error if unloadable
+            if image.isNull():
 
-            errorDialog = QtGui.QErrorMessage()
+                errorDialog = QtGui.QErrorMessage()
 
-            errorDialog.showMessage("Failed to open image")
+                errorDialog.showMessage("Failed to open image")
 
-        else:
+            else:
 
-            cursor = self.text.textCursor()
+                cursor = self.text.textCursor()
 
-            cursor.insertImage(image,filename)
+                cursor.insertImage(image,filename)
 
     def fontFamily(self,font):
         self.text.setCurrentFont(font)
