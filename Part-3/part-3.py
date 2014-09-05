@@ -33,7 +33,7 @@ class Main(QtGui.QMainWindow):
         self.printAction = QtGui.QAction(QtGui.QIcon("icons/print.png"),"Print document",self)
         self.printAction.setStatusTip("Print document")
         self.printAction.setShortcut("Ctrl+P")
-        self.printAction.triggered.connect(self.print)
+        self.printAction.triggered.connect(self.printHandler)
 
         self.previewAction = QtGui.QAction(QtGui.QIcon("icons/preview.png"),"Page view",self)
         self.previewAction.setStatusTip("Preview page before printing")
@@ -524,7 +524,7 @@ class Main(QtGui.QMainWindow):
 
         preview.exec_()
 
-    def print(self):
+    def printHandler(self):
 
         # Open printing dialog
         dialog = QtGui.QPrintDialog()
