@@ -59,7 +59,7 @@ class WordCount(QtGui.QDialog):
         self.setWindowTitle("Word count")
         self.setGeometry(300,300,200,200)
         self.setLayout(layout)
-        
+
     def getText(self):
 
         # Get the text currently in selection

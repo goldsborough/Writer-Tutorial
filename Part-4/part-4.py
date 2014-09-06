@@ -70,10 +70,20 @@ class Main(QtGui.QMainWindow):
         self.redoAction.setShortcut("Ctrl+Y")
         self.redoAction.triggered.connect(self.text.redo)
 
+        dateTimeAction = QtGui.QAction(QtGui.QIcon("icons/calender.png"),"Insert current date/time",self)
+        dateTimeAction.setStatusTip("Insert current date/time")
+        dateTimeAction.setShortcut("Ctrl+D")
+        dateTimeAction.triggered.connect(datetime.DateTime(self).show)
+
         wordCountAction = QtGui.QAction(QtGui.QIcon("icons/count.png"),"See word/symbol count",self)
         wordCountAction.setStatusTip("See word/symbol count")
         wordCountAction.setShortcut("Ctrl+W")
         wordCountAction.triggered.connect(self.wordCount)
+
+        tableAction = QtGui.QAction(QtGui.QIcon("icons/table.png"),"Insert table",self)
+        tableAction.setStatusTip("Insert table")
+        tableAction.setShortcut("Ctrl+T")
+        tableAction.triggered.connect(table.Table(self).show)
 
         imageAction = QtGui.QAction(QtGui.QIcon("icons/image.png"),"Insert image",self)
         imageAction.setStatusTip("Insert image")
@@ -112,7 +122,9 @@ class Main(QtGui.QMainWindow):
         self.toolbar.addSeparator()
 
         self.toolbar.addAction(self.findAction)
+        self.toolbar.addAction(dateTimeAction)
         self.toolbar.addAction(wordCountAction)
+        self.toolbar.addAction(tableAction)
         self.toolbar.addAction(imageAction)
 
         self.toolbar.addSeparator()
@@ -279,9 +291,178 @@ class Main(QtGui.QMainWindow):
         # the line and column number
         self.text.cursorPositionChanged.connect(self.cursorPosition)
 
+        # We need our own context menu for tables
+        self.text.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.text.customContextMenuRequested.connect(self.context)
+
         self.setGeometry(100,100,1030,800)
         self.setWindowTitle("Writer")
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
+
+    def context(self,pos):
+
+        # Grab the cursor
+        cursor = self.text.textCursor()
+
+        # Grab the current table, if there is one
+        table = cursor.currentTable()
+
+        # Above will return 0 if there is no current table, in which case
+        # we call the normal context menu. If there is a table, we create
+        # our own context menu specific to table interaction
+        if table:
+
+            menu = QtGui.QMenu(self)
+
+            appendRowAction = QtGui.QAction("Append row",self)
+            appendRowAction.triggered.connect(lambda: table.appendRows(1))
+
+            appendColAction = QtGui.QAction("Append column",self)
+            appendColAction.triggered.connect(lambda: table.appendColumns(1))
+
+
+            removeRowAction = QtGui.QAction("Remove row",self)
+            removeRowAction.triggered.connect(self.removeRow)
+
+            removeColAction = QtGui.QAction("Remove column",self)
+            removeColAction.triggered.connect(self.removeCol)
+
+
+            insertRowAction = QtGui.QAction("Insert row",self)
+            insertRowAction.triggered.connect(self.insertRow)
+
+            insertColAction = QtGui.QAction("Insert column",self)
+            insertColAction.triggered.connect(self.insertCol)
+
+
+            mergeAction = QtGui.QAction("Merge cells",self)
+            mergeAction.triggered.connect(lambda: table.mergeCells(cursor))
+
+            # Only allow merging if there is a selection
+            if not cursor.hasSelection():
+                mergeAction.setEnabled(False)
+
+
+            splitAction = QtGui.QAction("Split cells",self)
+
+            cell = table.cellAt(cursor)
+
+            # Only allow splitting if the current cell is larger
+            # than a normal cell
+            if cell.rowSpan() > 1 or cell.columnSpan() > 1:
+
+                splitAction.triggered.connect(lambda: table.splitCell(cell.row(),cell.column(),1,1))
+
+            else:
+                splitAction.setEnabled(False)
+
+
+            menu.addAction(appendRowAction)
+            menu.addAction(appendColAction)
+
+            menu.addSeparator()
+
+            menu.addAction(removeRowAction)
+            menu.addAction(removeColAction)
+
+            menu.addSeparator()
+
+            menu.addAction(insertRowAction)
+            menu.addAction(insertColAction)
+
+            menu.addSeparator()
+
+            menu.addAction(mergeAction)
+            menu.addAction(splitAction)
+
+            # Convert the widget coordinates into global coordinates
+            pos = self.mapToGlobal(pos)
+
+            # Add pixels for the tool and formatbars, which are not included
+            # in mapToGlobal(), but only if the two are currently visible and
+            # not toggled by the user
+
+            if self.toolbar.isVisible():
+                pos.setY(pos.y() + 45)
+                pass
+
+            if self.formatbar.isVisible():
+                pos.setY(pos.y() + 45)
+                pass
+
+
+            # Move the menu to the new position
+            menu.move(pos)
+
+            menu.show()
+
+        else:
+
+            event = QtGui.QContextMenuEvent(QtGui.QContextMenuEvent.Mouse,QtCore.QPoint())
+
+            self.text.contextMenuEvent(event)
+
+    def removeRow(self):
+
+        # Grab the cursor
+        cursor = self.text.textCursor()
+
+        # Grab the current table (we assume there is one, since
+        # this is checked before calling)
+        table = cursor.currentTable()
+
+        # Get the current cell
+        cell = table.cellAt(cursor)
+
+        # Delete the cell's row
+        table.removeRows(cell.row(),1)
+
+    def removeCol(self):
+
+        # Grab the cursor
+        cursor = self.text.textCursor()
+
+        # Grab the current table (we assume there is one, since
+        # this is checked before calling)
+        table = cursor.currentTable()
+
+        # Get the current cell
+        cell = table.cellAt(cursor)
+
+        # Delete the cell's column
+        table.removeColumns(cell.column(),1)
+
+    def insertRow(self):
+
+        # Grab the cursor
+        cursor = self.text.textCursor()
+
+        # Grab the current table (we assume there is one, since
+        # this is checked before calling)
+        table = cursor.currentTable()
+
+        # Get the current cell
+        cell = table.cellAt(cursor)
+
+        # Insert a new row at the cell's position
+        table.insertRows(cell.row(),1)
+
+    def insertCol(self):
+
+        # Grab the cursor
+        cursor = self.text.textCursor()
+
+        # Grab the current table (we assume there is one, since
+        # this is checked before calling)
+        table = cursor.currentTable()
+
+        # Get the current cell
+        cell = table.cellAt(cursor)
+
+        # Insert a new row at the cell's position
+        table.insertColumns(cell.column(),1)
+
+
     def toggleToolbar(self):
 
         state = self.toolbar.isVisible()

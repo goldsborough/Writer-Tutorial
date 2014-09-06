@@ -1,10 +1,12 @@
-In part one of this tutorial series on __*Building a text editor with PyQt*__, we built a basic text editor skeleton and already added features for file management, list insertion, undo/redo and more. In part two, we turned our text editor into a rich-text  editor by adding actions for text-formatting. In the third and final part of this series, we'll add some extremely cool extensions to our text editor for:
+In part one of this tutorial series on __*Building a text editor with PyQt*__, we built a basic text editor skeleton and already added features for file management, list insertion, undo/redo and more. In part two, we turned our text editor into a rich-text editor by adding actions for text-formatting. In the third and subsequently the fourth part of this series, we'll be adding some extremely cool extensions to our text editor for:
 
 + Finding and replacing text
 + Inserting an image
-+ Word count
++ Word and symbol count
 + Creating and managing tables
 + Inserting time and date
+
+This part will deal with the first three extensions and in the fourth and final part I'll discuss the remaining two.
 
 ## Directory structure
 
@@ -22,7 +24,7 @@ Your working directory should look somewhat like this now:
 
 ## Find-and-replace
 
-First up, we'll handle our find-and-replace dialog. PyQt unfortunately has no methods of its own for finding and replacing text in a QTextEdit, therefore we'll be doing a lot on our own here.
+First up, we'll handle our find-and-replace dialog. PyQt unfortunately has no methods of its own for finding and replacing text in a QTextEdit, therefore we'll be doing a lot ourselves for this one.
 
 __In your `ext` folder, create a new file called `find.py`__:
 
@@ -245,15 +247,15 @@ __In `initMenubar()`__:
 
 Woah! That was a lot! No worries, I'll explain everything.
 
-First, the easy stuff. In `ext/__init__.py`, we inserted the only line this file will ever hold: `__all__ = ["find"]`. This enables us to import from our `ext` package using the asterix symbol (`*`), which imports all modules that are inside `__all__`. Therefore, at the top of `writer.py`, we can now write `from ext import *`, which is currently equivalent to `from ext import find`, but will turn a lot handier once we have more modules in our package.
+First, the easy stuff. In `ext/__init__.py`, we inserted the only line this file will ever contain: `__all__ = ["find"]`. This enables us to import from our `ext` package using the asterix symbol (`*`), which imports all modules that are inside `__all__`. Therefore, at the top of `writer.py`, we can now write `from ext import *`, which is currently equivalent to `from ext import find`, but will be a lot more efficient once we have more modules in our package.
 
-Further down in `writer.py`, more precisely in our toolbar initialization method, `initToolbar()`, we, as we've done many times for our text editor, create a `QAction`, set up a status tip as well as a shortcut and also connect the `triggered` signal to a function. In this case, all we need to do is create an instance of the `Find` class (which I'll get to in a bit) and call its `show()` method. Fortunately, this all fits into one line and doesn't require us to create a separate method. In `initMenubar()`, we add this action to the `edit` menu.
+Further down in `writer.py`, more precisely in our toolbar initialization method, `initToolbar()`, we, as we've done many times for our text editor, create a `QAction`, set up a status tip as well as a shortcut and also connect the `triggered` signal to a slot function. In this case, all we need to do is create an instance of the `Find` class (which I'll get to in a bit) and call its `show()` method. Fortunately, this all fits into one line and doesn't require us to create a separate method. In `initMenubar()`, we add this action to the `edit` menu.
 
 ### Initializing the UI
 
-Now to our `Find` class in `find.py`. We start out like we did for our main window. First, we import the necessary modules from PyQt as well as the `re` module, which we'll use for text search. Next, we create a class and let it inherit from one of PyQt's GUI windows. In this case, we're going to inherit from `QDialog` instead of from `QMainWindow`, because, well, it's a dialog and not our main window. In the constructor, the `__init__()` method, we make the parent object a member (we pass `Find`'s constructor `self` in `initToolbar()`). Moreover, we need another class member, `self.lastMatch`, which will store the last found match (more about it soon).
+Now to our `Find` class in `find.py`. We start out like we did for our main window. First, we import the necessary modules from PyQt as well as the `re` module, which we'll use for text search. Next, we create a class and let it inherit from one of PyQt's GUI windows. In this case, we're going to inherit from `QDialog` instead of from `QMainWindow`, because, well, it's a dialog and not our main window. In the constructor, `__init__()`, we make the parent object a member (we pass `Find`'s constructor `self` in `Main.initToolbar()`). Moreover, we need another class member, `self.lastMatch`, which will store the last found match (more about it soon).
 
-In `initUI()`, we take care of the graphical part of our find-and-replace dialog. We'll create three push-buttons, one for finding text, one for replacing text and a last one for replacing all occurences. We create non-member instances of our buttons and connect their `clicked` signals to slot functions that we'll discuss in a bit:
+In `initUI()`, we take care of the graphical part of our find-and-replace dialog. We'll create three push-buttons, one for finding text, one for replacing a single occurence and a last one for replacing all occurences. We create non-member instances of our buttons and connect their `clicked` signals to slot functions that we'll discuss in a bit:
 
     # Button to search the document for something
     findButton = QtGui.QPushButton("Find",self)
@@ -267,7 +269,7 @@ In `initUI()`, we take care of the graphical part of our find-and-replace dialog
     allButton = QtGui.QPushButton("Replace all",self)
     allButton.clicked.connect(self.replaceAll)
 
-Next, we create two radio buttons that'll enable the user to switch between regular expression finding mode and normal, plain-text, finding mode. We make them class members because we need to access their states later on and connect their `toggled` signals to slot functions, as for the buttons:
+Next, we create two radio buttons that'll enable the user to switch between regular expression finding mode and normal, plain-text, finding mode. We make them class members, because we need to access their states later on, and connect their `toggled` signals to slot functions, as for the buttons above:
 
     # Normal mode - radio button
     self.normalRadio = QtGui.QRadioButton("Normal",self)
@@ -288,7 +290,7 @@ Then, we create two text fields. One where the user inputs text that he or she w
     self.replaceField = QtGui.QTextEdit(self)
     self.replaceField.resize(250,50)
 
-Almost done. We want to also provide the user with some search options, namely case-sensitivy control and a "Whole word" flag, which only highlights occurences that have non-alphanumeric characters to their left and right. For example, "I like cat soup" would pass the "Whole word" check for the word "cat" because the word "cat" is not part of another word. In "I greatly enjoy concatenating strings", the word "cat" would be highlighted if the "whole words" flag is unchecked, but would be ignored if the user only wants "whole words". The code for this is very simple, the only important things is that these `QCheckBox`es are class members so we can check their states later on. Also, we create a `QLabel` that will hold the string "Options:", just for visual clarity:
+Almost done. We want to also provide the user with some search options, namely case-sensitivy control and a "Whole word" flag, which only highlights occurences that have non-alphanumeric characters to their left and right. For example, "I like cat soup" would pass the "Whole word" check for the word "cat" because the word "cat" is not part of another word. In "I greatly enjoy concatenating strings", the string "cat" would be highlighted if the "whole words" flag is unchecked, but would be ignored if the user only wants "whole words". The code for this is very simple, the only important things is that these `QCheckBox`es are class members so we can check their states later on. Also, we create a `QLabel` that will hold the string "Options:", just for visual clarity:
 
     optionsLabel = QtGui.QLabel("Options: ",self)
 
@@ -298,7 +300,7 @@ Almost done. We want to also provide the user with some search options, namely c
     # Whole Words option
     self.wholeWords = QtGui.QCheckBox("Whole words",self)
 
-Now we need to order all of these widgets on our dialog. We do so by creating a `QGridLayout` and adding the widgets we just created using the `QGridLayout`'s `addWidget()` method, which takes the widget to add, the row, column, row-span and column-span as its arguments. Note that I create a "spacer" widget which is just a plain `QWidget` with a fixed size of 0 by 10 pixels. We insert this spacer to add some distance between the replace buttons and our options:
+Now we need to order all of these widgets on our dialog. We do so by creating a `QGridLayout` and adding the widgets we just created using the `QGridLayout`'s `addWidget()` method, which takes the widget to add, the row, column, row-span and column-span in the layout as its arguments. Note that I create a "spacer" widget which is just a plain `QWidget` with a fixed size of 0 by 10 pixels. We insert this spacer to add some distance between the replace buttons and our options:
 
     # Layout the objects on the screen
     layout = QtGui.QGridLayout()
@@ -334,7 +336,7 @@ Lastly, some window settings. We set our dialog's geometry settings, give it a w
 
 ### Raiders of the lost text
 
-Now that we have an interface, we can make our dialog .. do something. As a start, I'll discuss `find()` line by line. The first thing this method needs to do is get the text in which we'll look for queries and find out what text the user wants to query for. We can accomplish this by grabbing the text of our main window's `QTextEdit` as well as the text from our `findField`:
+Now that we have an interface, we can make our dialog ... do something. As a start, I'll discuss `find()` line by line. The first thing this method needs to do is get the text in which we'll look for queries, our main window's `QTextEdit`, and find out what text the user wants to find, which we get from our `findField`:
 
     # Grab the parent's text
     text = self.parent.text.toPlainText()
@@ -363,7 +365,7 @@ Then, we need to check whether the user has ticked any options. Note that we wil
     # The actual search
     self.lastMatch = pattern.search(text,start)
 
-If the search was succesful, we need to highlight the match. We have to do this manually using our main window's `QTextEdit`'s `QTextCursor` again, but more about that in a bit. If the user had the "whole word" flag check, this means that the match also includes the two non-alphanumeric characters that we included in the search. Would we leave the indices like this, replacing the matched text would mean also replacing the spaces or punctuation around the actual matched text, which would make our users frustrated and make them hate us, which in turn would make us very sad. To keep everyone happy and loving, we increment the starting position and decrement the ending index of our match (if the "whole words" flag was checked). If the search was unsuccessful, we set the cursor to the end of the text:
+If the search was succesful, we need to highlight the match. We have to do this manually using our main window's `QTextEdit`'s `QTextCursor` again, but more about that in a bit. If the user had the "whole word" flag checked, this means that the match also includes the two non-alphanumeric characters that we included in the search. Would we leave the indices like this, replacing the matched text would mean also replacing the spaces or punctuation around the actual matched text, which would make our users frustrated and make them hate us, which in turn would make us very sad. To keep everyone happy and loving, we increment the starting position and decrement the ending index of our match. If the search was unsuccessful, we set the cursor to the end of the text:
 
     if self.lastMatch:
 
@@ -386,7 +388,7 @@ If the search was succesful, we need to highlight the match. We have to do this 
 
 ### Highlights
 
-Because we just used the `self.moveCursor()` method in `find()`, I'll talk about that next. As commented, *We retrieve the QTextCursor object from the parent's QTextEdit* and *Then we set the position to the beginning of the last match*. *Next we move the Cursor over the match and pass the KeepAnchor parameter which will make the cursor select the the match's text*. *And finally we set this new cursor as the parent's*:
+Because we just used the `self.moveCursor()` method in `find()`, I'll talk about that next. As commented, *We retrieve the QTextCursor object from the parent's QTextEdit* and *Then we set the position to the beginning of the last match*. *Next we move the Cursor over the match and pass the KeepAnchor parameter which will make the cursor select the match's text*. *And finally we set this new cursor as the parent's*:
 
     def moveCursor(self,start,end):
 
@@ -397,7 +399,7 @@ Because we just used the `self.moveCursor()` method in `find()`, I'll talk about
       cursor.setPosition(start)
 
       # Next we move the Cursor over the match and pass the KeepAnchor parameter
-      # which will make the cursor select the the match's text
+      # which will make the cursor select the match's text
       cursor.movePosition(QtGui.QTextCursor.Right,QtGui.QTextCursor.KeepAnchor,end - start)
 
       # And finally we set this new cursor as the parent's
@@ -427,13 +429,13 @@ If those two conditions are met, we can use the cursor's `insertText()` method a
                 # And set the new cursor
                 self.parent.text.setTextCursor(cursor)
 
-#### Replace all the text!
+#### Replace all the occurences!
 
 Next up, we want to
 
 ![replace all the occurences](http://cdn.meme.li/instances/500x/54022879.jpg)
 
-To replace all occurences, we need to first reset our `self.lastMatch` member to None and call `find()`, so that the search will begin from the start of the text. Then, if the first match was successful, we enter a loop that will replace and find occurences as long as `self.lastMatch` is not `None`, so as long as the search doesn't hit the end of the text.
+To replace all the occurences, we need to first reset our `self.lastMatch` member to None and call `find()`, so that the search will begin from the start of the text. Then, if the first match was successful, we enter a loop that will replace and find occurences as long as `self.lastMatch` is not `None`, so as long as the search doesn't hit the end of the text.
 
         def replaceAll(self):
 
@@ -470,7 +472,7 @@ The last two functions we need for our `Find` class are the handlers for the sea
             self.caseSens.setEnabled(True)
             self.wholeWords.setEnabled(True)
 
-Regex mode means that the search flags are unnecessary, since the user will want to input flags using regular expressions himself or herself. Therefore, we uncheck the check boxes and also disable them, which will "gray" them out.
+Regex mode means that the search flags are unnecessary, since the user will want to input flags using regular expressions him- or herself. Therefore, we uncheck the check boxes and also disable them, which will "gray" them out.
 
 For `normalMode()`, we simply re-enable the check boxes.
 
@@ -487,7 +489,7 @@ Image insertion does not require a class of its own, so we'll stick around `writ
 
     self.toolbar.addAction(imageAction)
 
-And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a file in the very beginning, from which we retrieve a file name. Note that for the file dialog's filter, we include common image formats. If we got a file name, we create a `QImage` and, if it was loadable (`isNull` == False), insert it using our `QTextCursor`'s `insertImage` method. If it wasn't loadable, we pop up an error dialog:
+And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a `.writer` file in the very beginning, from which we retrieve a file name. For the file dialog's filter, we include common image formats. If we got a file name, we create a `QImage` and, if it was loadable (`isNull` == False), we insert it using our `QTextCursor`'s `insertImage()` method. If it wasn't loadable, we pop up an error dialog:
 
     def insertImage(self):
 
@@ -627,7 +629,7 @@ __Below `initUI()`__:
 
         wc.show()
 
-This dialog will show the user the number of words and symbols currently under selection (if there is a selection) and also the number of words and symbols in the overall text. The UI is fairly simple. We create labels that indicate whether the numbers shown are for the current selection or the whole text, `currentLabel` and `totalLabel`, as well as two labels each that hold the strings "Words:" and "Symbols:", plus two labels each in which we'll show the actual numbers (these must be class members):
+This dialog will show the user the number of words and symbols currently under selection (if there is a selection) and also the number of words and symbols in the whole text. The UI is fairly simple. We create labels that indicate whether the numbers shown are for the current selection or the whole text, `currentLabel` and `totalLabel`, as well as two labels each that hold the strings "Words:" and "Symbols:", plus two labels each in which we'll show the actual numbers (these must be class members):
 
         # Word count in selection
         currentLabel = QtGui.QLabel("Current selection",self)
@@ -709,81 +711,6 @@ The function that will count all of these words and symbols is `getText()`. Firs
 
 In `writer.py`, we again create a `QAction` for our word count dialog and add it to the toolbar. In the slot function, `self.wordCount()`, we create an instance of our `WordCount` class, call its `getText()` method and finally show the dialog.
 
-## Inserting time and date
+That'll be it for this part of the series. In the next part, we'll be adding some more awesome extensions for inserting the current time and date into the text as well as a more sophisticated dialog for inserting tables. Moreover, I'll show you how to enable custom context menus that will enable us to manipulate the tables we insert into the text (adding/deleting rows and columns).
 
-The time and date dialog will be very simple. Create a new file in `ext` and call it `datetime.py`.
-
-__In `ext/datetime.py`__:
-
-    from PyQt4 import QtGui, QtCore
-    from PyQt4.QtCore import Qt
-
-    from time import strftime
-
-    class DateTime(QtGui.QDialog):
-        def __init__(self,parent = None):
-            QtGui.QDialog.__init__(self, parent)
-
-            self.parent = parent
-
-            self.initUI()
-
-        def initUI(self):
-
-            self.form = QtGui.QComboBox(self)
-
-            # Display the different time formats
-            self.form.addItem(strftime("%A, %d. %B %Y %H:%M"))
-            self.form.addItem(strftime("%A, %d. %B %Y"))
-            self.form.addItem(strftime("%d. %B %Y %H:%M"))
-            self.form.addItem(strftime("%d.%m.%Y %H:%M"))
-            self.form.addItem(strftime("%d. %B %Y"))
-            self.form.addItem(strftime("%d %m %Y"))
-            self.form.addItem(strftime("%d.%m.%Y"))
-            self.form.addItem(strftime("%x"))
-            self.form.addItem(strftime("%X"))
-            self.form.addItem(strftime("%H:%M"))
-
-            insert = QtGui.QPushButton("Insert",self)
-            insert.clicked.connect(self.insert)
-
-            cancel = QtGui.QPushButton("Cancel",self)
-            cancel.clicked.connect(self.close)
-
-            layout = QtGui.QGridLayout()
-
-            layout.addWidget(self.form,0,0,1,2)
-            layout.addWidget(insert,1,0)
-            layout.addWidget(cancel,1,1)
-
-            self.setGeometry(300,300,400,80)
-            self.setWindowTitle("Date and Time")
-            self.setLayout(layout)
-
-        def insert(self):
-
-            # Grab cursor
-            cursor = self.parent.text.textCursor()
-
-            # Insert the comboBox's current text
-            cursor.insertText(self.form.currentText())
-
-            # Close the window
-            self.close()
-
-
-__In `ext/__init__.py`__:
-
-    __all__ = ["find","wordcount","datetime"]
-
-__Back to `writer.py`. In `initToolbar()`__:
-
-        dateTimeAction = QtGui.QAction(QtGui.QIcon("icons/calender.png"),"Insert current date/time",self)
-        dateTimeAction.setStatusTip("Insert current date/time")
-        dateTimeAction.setShortcut("Ctrl+D")
-        dateTimeAction.triggered.connect(datetime.DateTime(self).show)
-
-        self.toolbar.addAction(dateTimeAction)
-
-
-As
+In the meantime, don't hesitate to leave me a comment below this post. See you next week!

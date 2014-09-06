@@ -1,4 +1,4 @@
-In the last part of my tutorial series on *__Building a text editor with PyQt__*, we built the text editor's basic skeleton and already added some handy features for file management, printing, inserting lists and more. This part will focus on the format bar, which we will populate with actions to change font family, background color, alignment and other features. 
+In the last part of my tutorial series on *__Building a text editor with PyQt__*, we built the text editor's basic skeleton and already added some handy features for file management, printing, inserting lists and more. This part will focus on the format bar, which we will populate with actions to change font family, background color, alignment and other features.
 
 ## Font
 
@@ -72,16 +72,16 @@ __Below `initUI()`__:
 	    color = QtGui.QColorDialog.getColor()
 
 	    self.text.setTextBackgroundColor(color)
-	    
+
 
 
 Note that the actions we just created don't follow the code pattern for actions I described last time, we don't make these actions class members because we only need to create and use them within the scope of `initFormatbar()`. We also don't give them tooltips or shortcuts anymore (unless you want to, of course).
 
-We start out by creating a `QFontComboBox`, which is a very convenient combo box that automatically includes all the fonts available to the system. We instantiate it and connect its `currentFontChanged` signal to a slot function, `self.fontFamily()`, which we later created underneath the `initUI()` method. As you can see, we also give this slot function a second parameter `font`, so PyQt will pass the user-selected `QFont` object to our function, reducing our work to setting this font to the text's current font. 
+We start out by creating a `QFontComboBox`, which is a very convenient combo box that automatically includes all the fonts available to the system. We instantiate it and connect its `currentFontChanged` signal to a slot function, `self.fontFamily()`, which we later created underneath the `initUI()` method. As you can see, we also give this slot function a second parameter `font`, so PyQt will pass the user-selected `QFont` object to our function, reducing our work to setting this font to the text's current font.
 
-Next up, we need a combo box for font sizes. PyQt itself doesn't have such a thing, so we need to create one ourself. This is easily done by instantiating a normal combo box, here called `fontSize`, which we set *editable*, meaning the user can enter any number he or she wants for the font. After connecting the `activated` signal to a slot function, we populate the combo box with some common font sizes. For the slot function, we again set a second parameter, `font size`, which PyQt passes to us when the user selects a font size from the combo box or, alternatively, enters a custom size. We set the user's selection as the text's current *font point size*. 
+Next up, we need a combo box for font sizes. PyQt itself doesn't have such a thing, so we need to create one ourself. This is easily done by instantiating a normal combo box, here called `fontSize`, which we set *editable*, meaning the user can enter any number he or she wants for the font. After connecting the `activated` signal to a slot function, we populate the combo box with some common font sizes. For the slot function, we again set a second parameter, `font size`, which PyQt passes to us when the user selects a font size from the combo box or, alternatively, enters a custom size. We set the user's selection as the text's current *font point size*.
 
-The last two actions are very similar. In both cases, we create two actions that open a `QColorDialog` when activated. In case of `fontColor`, we set the color selection as the font color. For `backColor`, we set the color as the current text's background color. 
+The last two actions are very similar. In both cases, we create two actions that open a `QColorDialog` when activated. In case of `fontColor`, we set the color selection as the font color. For `backColor`, we set the color as the current text's background color.
 
 ## Bold moves
 
@@ -202,7 +202,7 @@ __Below `initUI()`__:
 
         # Set the new format
         self.text.setCurrentCharFormat(fmt)
-        
+
 The changes in `initFormatbar()` should be relatively understandable by now. We create actions and connect the `triggered` signals to slot functions, after which we add the actions to the format bar.
 
 In `bold()`, we invert the font weight of the current text. If the text is bold, we set the font weight to "normal". If the font weight is normal, we set it to bold.
@@ -211,7 +211,7 @@ For `italic()` and `underline()`, our `QTextEdit` object has functions for setti
 
 The `strike()` function is a bit different. We retrieve our text's `currentCharFormat`, invert the state of the `fontStrikeOut` property and finally set our new char format to the text's "current" char format.
 
-Lastly, in `superScript()` and `subScript()`, we again fetch the current char format, toggle the `verticalAlignment` property like we did in `bold()` and reset the new char format to make our changes visible. 
+Lastly, in `superScript()` and `subScript()`, we again fetch the current char format, toggle the `verticalAlignment` property like we did in `bold()` and reset the new char format to make our changes visible.
 
 ## Alignment
 
@@ -253,9 +253,9 @@ __Below the `initUI()` method__:
 
     def alignJustify(self):
         self.text.setAlignment(Qt.AlignJustify)
-        
 
-Changes in the `initFormatbar()` method follow the previous pattern and the slot functions are also very simple. We change the text's alignment using our `QTextEdit`'s `setAlignment` method, passing it the respective member of the Qt namespace, e.g. `Qt.AlignCenter`. 
+
+Changes in the `initFormatbar()` method follow the previous pattern and the slot functions are also very simple. We change the text's alignment using our `QTextEdit`'s `setAlignment` method, passing it the respective member of the Qt namespace, e.g. `Qt.AlignCenter`.
 
 ## Indent - dedent
 
@@ -274,7 +274,7 @@ __`initFormatbar()`__:
 __Further below__:
 
 	self.formatbar.addAction(indentAction)
-	self.formatbar.addAction(dedentAction)	
+	self.formatbar.addAction(dedentAction)
 
 __Below `initUI()`__:
 
@@ -336,8 +336,8 @@ __Below `initUI()`__:
 
         else:
             self.handleDedent(cursor)
-            
-            
+
+
     def handleDedent(self,cursor):
 
         cursor.movePosition(QtGui.QTextCursor.StartOfLine)
@@ -361,7 +361,7 @@ __Below `initUI()`__:
                 cursor.deleteChar()
 
 
-Changes to `initFormatbar()` as previously discussed. 
+Changes to `initFormatbar()` as previously discussed.
 
 Let's go through the `indent()` function step by step. The first thing we need to do is grab our text's current `QTextCursor` object. We check if the user currently has any text under selection. If not, we just insert a tab. If he or she does have something under selection, however, we need to get a bit more funky. More specifically, we have to find out how many lines the user has under selection and insert a tab before each line. We do so by first getting the current line/block number at the start of the selection, then moving the cursor to the end and subtracting the previously stored block/line number from the new one. This provides us with the range of lines over which we subsequently iterate. For each iteration, we move the cursor to the start of the current line, insert a tab and finally move up one line until we reach the top (remember that before we start iterating, we have the cursor at the end of the selection, where we moved it to find out the selection's last line number)
 
@@ -370,7 +370,7 @@ The `dedent()` method is quite similar, it differs, however, in our need to also
 + People who prefer 8 spaces over a tab character ('/t') also get their money's worth
 + Excess space that could block from you from completely dedenting a block of text is deleted
 
-## Final customization options 
+## Final customization options
 
 Now that our tool bar, our format bar and our status bar are populated, we can add some final customization options to toggle the visibility of these three bars:
 
@@ -412,7 +412,7 @@ __Below `initUI()`__:
 
         # Set the visibility to its inverse
         self.statusbar.setVisible(not state)
-        
+
 
 We create three actions in our `initMenubar()` method,
 
@@ -420,8 +420,8 @@ We create three actions in our `initMenubar()` method,
 + formatbarAction
 + statusbarAction
 
-and connect them to slot functions. Note that we don't add these actions to any of the toolbars, but only to the drop-down menus at the top of our screen. 
+and connect them to slot functions. Note that we don't add these actions to any of the toolbars, but only to the drop-down menus at the top of our screen.
 
-In the slot functions, we do what we did for some of the formatting functions, we retrieve the visibility states of the various bars and set the them to their opposite. 
+In the slot functions, we do what we did for some of the formatting functions, we retrieve the visibility states of the various bars and set the them to their opposite.
 
-That'll be it for this post, be sure to check out the third and final part of the series on __*Building a text editor with PyQt*__, in which we'll add some very interesting actions for find-and-replace, inserting and manipulating tables and more. 
+That'll be it for this post. Be sure to check back for the upcoming parts of this series on __*Building a text editor with PyQt*__, in which we'll add some very cool actions for find-and-replace, inserting and manipulating tables and more.

@@ -1,1 +1,1 @@
-__all__ = ["find","datetime","wordcount","table"]
+__all__ = ["find","wordcount"]
