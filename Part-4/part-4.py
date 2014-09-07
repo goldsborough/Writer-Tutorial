@@ -11,6 +11,8 @@ class Main(QtGui.QMainWindow):
 
         self.filename = ""
 
+        self.changesSaved = True
+
         self.initUI()
 
     def initToolbar(self):
@@ -295,9 +297,47 @@ class Main(QtGui.QMainWindow):
         self.text.setContextMenuPolicy(Qt.CustomContextMenu)
         self.text.customContextMenuRequested.connect(self.context)
 
+        self.text.textChanged.connect(self.changed)
+
         self.setGeometry(100,100,1030,800)
         self.setWindowTitle("Writer")
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
+
+    def changed(self):
+        self.changesSaved = False
+
+    def closeEvent(self,event):
+
+        if self.changesSaved:
+
+            event.accept()
+
+        else:
+        
+            popup = QtGui.QMessageBox(self)
+
+            popup.setIcon(QtGui.QMessageBox.Warning)
+            
+            popup.setText("The document has been modified")
+            
+            popup.setInformativeText("Do you want to save your changes?")
+            
+            popup.setStandardButtons(QtGui.QMessageBox.Save   |
+                                      QtGui.QMessageBox.Cancel |
+                                      QtGui.QMessageBox.Discard)
+            
+            popup.setDefaultButton(QtGui.QMessageBox.Save)
+
+            answer = popup.exec_()
+
+            if answer == QtGui.QMessageBox.Save:
+                self.save()
+
+            elif answer == QtGui.QMessageBox.Discard:
+                event.accept()
+
+            else:
+                event.ignore()
 
     def context(self,pos):
 
@@ -505,14 +545,18 @@ class Main(QtGui.QMainWindow):
         if not self.filename:
           self.filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
 
-        # Append extension if not there yet
-        if not self.filename.endswith(".writer"):
-          self.filename += ".writer"
+        if self.filename:
+            
+            # Append extension if not there yet
+            if not self.filename.endswith(".writer"):
+              self.filename += ".writer"
 
-        # We just store the contents of the text file along with the
-        # format in html, which Qt does in a very nice way for us
-        with open(self.filename,"wt") as file:
-            file.write(self.text.toHtml())
+            # We just store the contents of the text file along with the
+            # format in html, which Qt does in a very nice way for us
+            with open(self.filename,"wt") as file:
+                file.write(self.text.toHtml())
+
+            self.changesSaved = True
 
     def preview(self):
 
