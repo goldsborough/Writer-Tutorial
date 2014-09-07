@@ -563,9 +563,12 @@ class Main(QtGui.QMainWindow):
             # Error if unloadable
             if image.isNull():
 
-                errorDialog = QtGui.QErrorMessage()
-
-                errorDialog.showMessage("Failed to open image")
+                popup = QtGui.QMessageBox(QtGui.QMessageBox.Critical,
+                                          "Image load error",
+                                          "Could not load image file!",
+                                          QtGui.QMessageBox.Ok,
+                                          self)
+                popup.show()
 
             else:
 

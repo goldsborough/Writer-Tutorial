@@ -429,13 +429,9 @@ If those two conditions are met, we can use the cursor's `insertText()` method a
                 # And set the new cursor
                 self.parent.text.setTextCursor(cursor)
 
-#### Replace all the occurences!
+### Replace all the occurences!
 
-Next up, we want to
-
-![replace all the occurences](http://cdn.meme.li/instances/500x/54022879.jpg)
-
-To replace all the occurences, we need to first reset our `self.lastMatch` member to None and call `find()`, so that the search will begin from the start of the text. Then, if the first match was successful, we enter a loop that will replace and find occurences as long as `self.lastMatch` is not `None`, so as long as the search doesn't hit the end of the text.
+To replace all the occurences of a query in the text, we need to first reset our `self.lastMatch` member to None and call `find()`, so that the search will begin from the start of the text. Then, if the first match was successful, we enter a loop that will replace and find occurences as long as `self.lastMatch` is not `None`, so as long as the search doesn't hit the end of the text.
 
         def replaceAll(self):
 
@@ -489,7 +485,7 @@ Image insertion does not require a class of its own, so we'll stick around `writ
 
     self.toolbar.addAction(imageAction)
 
-And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a `.writer` file in the very beginning, from which we retrieve a file name. For the file dialog's filter, we include common image formats. If we got a file name, we create a `QImage` and, if it was loadable (`isNull` == False), we insert it using our `QTextCursor`'s `insertImage()` method. If it wasn't loadable, we pop up an error dialog:
+And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` dialog like we did for opening a `.writer` file in the very beginning, from which we retrieve a file name. For the file dialog's filter, we include common image formats. If we got a file name, we create a `QImage` and, if it was loadable (`isNull` == False), we insert it using our `QTextCursor`'s `insertImage()` method. If it wasn't loadable, we pop up a `QMessageBox`. The constructor of this `QMessageBox` requires an icon from the QMessageBox namespace (either a question, information, warning or "critical" icon), a window title, the message to display, a set of buttons to show and lastly a parent object:
 
     def insertImage(self):
 
@@ -502,9 +498,12 @@ And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` di
         # Error if unloadable
         if image.isNull():
 
-            errorDialog = QtGui.QErrorMessage()
-
-            errorDialog.showMessage("Failed to open image")
+            popup = QtGui.QMessageBox(QtGui.QMessageBox.Critical,
+                                      "Image load error",
+                                      "Could not load image file!",
+                                      QtGui.QMessageBox.Ok,
+                                      self)
+            popup.show()
 
         else:
 
@@ -578,6 +577,7 @@ __`ext/wordcount.py`__:
 
             self.setWindowTitle("Word count")
             self.setGeometry(300,300,200,200)
+            self.setLayout(layout)
 
         def getText(self):
 
@@ -680,8 +680,9 @@ We put them into a layout and set the dialog's geometry and window title:
 
         self.setWindowTitle("Word count")
         self.setGeometry(300,300,200,200)
+        self.setLayout(layout)
 
-The function that will count all of these words and symbols is `getText()`. First, we want to count the words and symbols of the selected text, which we get by grabbing our `QTextEdit`'s `QTextCursor` and calling its `selectedText()` method. If there is any, we use the `split()` method of the retrieved string and count its content, which is then the number of words. The number of symbols is simply the length of the entire string. If there was no selected text in the first place, the returned string would be empty and thus all counts would be zero, which we want in that case. We then visualize the two numbers we just got using the respective labels' `setText()` method. We repeat this process for the whole text and again set the counts we retrieved to the respective labels' text:
+The function that will count all of these words and symbols is `getText()`. First, we want to count the words and symbols of the selected text, which we get by grabbing our `QTextEdit`'s `QTextCursor` and calling its `selectedText()` method. We use the retrieved string's `split()` method to split the string into a list of individual words, of which we then get the length. The number of symbols is simply the length of the entire string. We then visualize the two numbers we just got using the respective labels' `setText()` method. We repeat this process for the whole text and again set the counts we retrieved to the respective labels' text:
 
         def getText(self):
 
@@ -711,6 +712,6 @@ The function that will count all of these words and symbols is `getText()`. Firs
 
 In `writer.py`, we again create a `QAction` for our word count dialog and add it to the toolbar. In the slot function, `self.wordCount()`, we create an instance of our `WordCount` class, call its `getText()` method and finally show the dialog.
 
-That'll be it for this part of the series. In the next part, we'll be adding some more awesome extensions for inserting the current time and date into the text as well as a more sophisticated dialog for inserting tables. Moreover, I'll show you how to enable custom context menus that will enable us to manipulate the tables we insert into the text (adding/deleting rows and columns).
+That'll be it for this part of the series. In the next part, we'll be adding some more awesome extensions for inserting the current time and date into the text as well as a more sophisticated dialog for inserting tables. Moreover, I'll show you how to enable custom context menus that will enable us to manipulate the tables we insert into the text (adding/deleting/merging rows and columns).
 
 In the meantime, don't hesitate to leave me a comment below this post. See you next week!

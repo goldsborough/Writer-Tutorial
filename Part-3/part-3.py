@@ -282,6 +282,7 @@ class Main(QtGui.QMainWindow):
         self.setGeometry(100,100,1030,800)
         self.setWindowTitle("Writer")
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
+        
     def toggleToolbar(self):
 
         state = self.toolbar.isVisible()
@@ -382,9 +383,12 @@ class Main(QtGui.QMainWindow):
             # Error if unloadable
             if image.isNull():
 
-                errorDialog = QtGui.QErrorMessage()
-
-                errorDialog.showMessage("Failed to open image")
+                popup = QtGui.QMessageBox(QtGui.QMessageBox.Critical,
+                                          "Image load error",
+                                          "Could not load image file!",
+                                          QtGui.QMessageBox.Ok,
+                                          self)
+                popup.show()
 
             else:
 

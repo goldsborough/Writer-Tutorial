@@ -1,4 +1,4 @@
-Welcome back to my series on
+Welcome back to my series on __*Building a text editor with PyQt*__. In the last part, we started to add some great extensions to our text editor, such as a find-and-replace dialog or a way of inserting an image into our text. This part will deal with two more extensions, namely one for inserting the current date and time into our text and another for inserting and managing tables.
 
 ## Inserting time and date
 
@@ -86,4 +86,355 @@ Next up, `initUI()`. We create a `QComboBox`, `self.box`, and fill it with all o
 
 In `self.insert()`, we first grab our `QTextEdit`'s cursor and then get the appropriate format string using the `QComboBox`'s `currentIndex()` and our list of formats, which we then turn into a date-time string using `strftime()`. You might think that we could just use the `QComboBox`'s `currentText()` method to retrieve the actual string and thus avoid a second call to `strftime()`, however the user might decide to make a sandwich *just* when he or she was about to press "insert" and thus the date-time string would not be up-to-date anymore once the user returns from gloriously feasting - tragic. Once we have the new string, we insert it using our cursor's `insertText()` method. Also, we want to close the dialog once the user has finished, so we call `self.close()` at the end.
 
-The other two snippets of code should be self-explanatory by now. We add this module to our `ext` package and create an appropriate `QAction` for it in our main window.
+The other two snippets of code should be self-explanatory if you've read other parts of this series. We add this module to our `ext` package and create an appropriate `QAction` for it in our main window.
+
+## Tables
+
+Next up, I'll show you how to create and manipulate tables. The steps to accomplish this are fairly straightforward:
+
+1. Go to your nearest forest and start choppin' up some wood. I recommend a fine oak or fir tree for our purposes.
+2. Saw your wood into appropriately shaped pieces.
+3. Dry the wood for approximately 8 months. Check back to this tutorial then.
+4. Hammer the table's leg to the base.
+5. Profit.
+
+What do you mean "different kind of table"? Oh right, tables for data! Disregarding whether or not you just found this funny, create a new file in our `ext` package called `table.py`:
+
+`ext/table.py`:
+
+    from PyQt4 import QtGui, QtCore
+    from PyQt4.QtCore import Qt
+
+    class Table(QtGui.QDialog):
+        def __init__(self,parent = None):
+            QtGui.QDialog.__init__(self, parent)
+
+            self.parent = parent
+
+            self.initUI()
+
+        def initUI(self):
+
+            # Rows
+            rowsLabel = QtGui.QLabel("Rows: ",self)
+
+            self.rows = QtGui.QSpinBox(self)
+
+            # Columns
+            colsLabel = QtGui.QLabel("Columns",self)
+
+            self.cols = QtGui.QSpinBox(self)
+
+            # Cell spacing (distance between cells)
+            spaceLabel = QtGui.QLabel("Cell spacing",self)
+
+            self.space = QtGui.QSpinBox(self)
+
+            # Cell padding (distance between cell and inner text)
+            padLabel = QtGui.QLabel("Cell padding",self)
+
+            self.pad = QtGui.QSpinBox(self)
+
+            self.pad.setValue(10)
+
+            # Button
+            insertButton = QtGui.QPushButton("Insert",self)
+            insertButton.clicked.connect(self.insert)
+
+            # Layout
+            layout = QtGui.QGridLayout()
+
+            layout.addWidget(rowsLabel,0,0)
+            layout.addWidget(self.rows,0,1)
+
+            layout.addWidget(colsLabel,1,0)
+            layout.addWidget(self.cols,1,1)
+
+            layout.addWidget(padLabel,2,0)
+            layout.addWidget(self.pad,2,1)
+
+            layout.addWidget(spaceLabel,3,0)
+            layout.addWidget(self.space,3,1)
+
+            layout.addWidget(insertButton,4,0,1,2)
+
+            self.setWindowTitle("Insert Table")
+            self.setGeometry(300,300,200,100)
+            self.setLayout(layout)
+
+        def insert(self):
+
+            cursor = self.parent.text.textCursor()
+
+            # Get the configurations
+            rows = self.rows.value()
+
+            cols = self.cols.value()
+
+            if not rows or not cols:
+
+                popup = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                                          "Parameter error",
+                                          "Row and column numbers may not be zero!",
+                                          QtGui.QMessageBox.Ok,
+                                          self)
+                popup.show()
+
+            else:
+
+                padding = self.pad.value()
+
+                space = self.space.value()
+
+                # Set the padding and spacing
+                fmt = QtGui.QTextTableFormat()
+
+                fmt.setCellPadding(padding)
+
+                fmt.setCellSpacing(space)
+
+                # Inser the new table
+                cursor.insertTable(rows,cols,fmt)
+
+                self.close()
+
+`ext/__init__.py`:
+
+    __all__ = ["find","datetime","wordcount","table"]
+
+__Back to `writer.py`. In `initToolbar()`__:
+
+    tableAction = QtGui.QAction(QtGui.QIcon("icons/table.png"),"Insert table",self)
+    tableAction.setStatusTip("Insert table")
+    tableAction.setShortcut("Ctrl+T")
+    tableAction.triggered.connect(table.Table(self).show)
+
+    self.toolbar.addAction(tableAction)
+
+__In `initUI()`__:
+
+    # We need our own context menu for tables
+    self.text.setContextMenuPolicy(Qt.CustomContextMenu)
+    self.text.customContextMenuRequested.connect(self.context)
+
+__Below `initUI()`__:
+
+    def context(self,pos):
+
+            # Grab the cursor
+            cursor = self.text.textCursor()
+
+            # Grab the current table, if there is one
+            table = cursor.currentTable()
+
+            # Above will return 0 if there is no current table, in which case
+            # we call the normal context menu. If there is a table, we create
+            # our own context menu specific to table interaction
+            if table:
+
+                menu = QtGui.QMenu(self)
+
+                appendRowAction = QtGui.QAction("Append row",self)
+                appendRowAction.triggered.connect(lambda: table.appendRows(1))
+
+                appendColAction = QtGui.QAction("Append column",self)
+                appendColAction.triggered.connect(lambda: table.appendColumns(1))
+
+
+                removeRowAction = QtGui.QAction("Remove row",self)
+                removeRowAction.triggered.connect(self.removeRow)
+
+                removeColAction = QtGui.QAction("Remove column",self)
+                removeColAction.triggered.connect(self.removeCol)
+
+
+                insertRowAction = QtGui.QAction("Insert row",self)
+                insertRowAction.triggered.connect(self.insertRow)
+
+                insertColAction = QtGui.QAction("Insert column",self)
+                insertColAction.triggered.connect(self.insertCol)
+
+
+                mergeAction = QtGui.QAction("Merge cells",self)
+                mergeAction.triggered.connect(lambda: table.mergeCells(cursor))
+
+                # Only allow merging if there is a selection
+                if not cursor.hasSelection():
+                    mergeAction.setEnabled(False)
+
+
+                splitAction = QtGui.QAction("Split cells",self)
+
+                cell = table.cellAt(cursor)
+
+                # Only allow splitting if the current cell is larger
+                # than a normal cell
+                if cell.rowSpan() > 1 or cell.columnSpan() > 1:
+
+                    splitAction.triggered.connect(lambda: table.splitCell(cell.row(),cell.column(),1,1))
+
+                else:
+                    splitAction.setEnabled(False)
+
+
+                menu.addAction(appendRowAction)
+                menu.addAction(appendColAction)
+
+                menu.addSeparator()
+
+                menu.addAction(removeRowAction)
+                menu.addAction(removeColAction)
+
+                menu.addSeparator()
+
+                menu.addAction(insertRowAction)
+                menu.addAction(insertColAction)
+
+                menu.addSeparator()
+
+                menu.addAction(mergeAction)
+                menu.addAction(splitAction)
+
+                # Convert the widget coordinates into global coordinates
+                pos = self.mapToGlobal(pos)
+
+                # Add pixels for the tool and formatbars, which are not included
+                # in mapToGlobal(), but only if the two are currently visible and
+                # not toggled by the user
+
+                if self.toolbar.isVisible():
+                    pos.setY(pos.y() + 45)
+                    pass
+
+                if self.formatbar.isVisible():
+                    pos.setY(pos.y() + 45)
+                    pass
+
+
+                # Move the menu to the new position
+                menu.move(pos)
+
+                menu.show()
+
+            else:
+
+                event = QtGui.QContextMenuEvent(QtGui.QContextMenuEvent.Mouse,QtCore.QPoint())
+
+                self.text.contextMenuEvent(event)
+
+        def removeRow(self):
+
+            # Grab the cursor
+            cursor = self.text.textCursor()
+
+            # Grab the current table (we assume there is one, since
+            # this is checked before calling)
+            table = cursor.currentTable()
+
+            # Get the current cell
+            cell = table.cellAt(cursor)
+
+            # Delete the cell's row
+            table.removeRows(cell.row(),1)
+
+        def removeCol(self):
+
+            # Grab the cursor
+            cursor = self.text.textCursor()
+
+            # Grab the current table (we assume there is one, since
+            # this is checked before calling)
+            table = cursor.currentTable()
+
+            # Get the current cell
+            cell = table.cellAt(cursor)
+
+            # Delete the cell's column
+            table.removeColumns(cell.column(),1)
+
+        def insertRow(self):
+
+            # Grab the cursor
+            cursor = self.text.textCursor()
+
+            # Grab the current table (we assume there is one, since
+            # this is checked before calling)
+            table = cursor.currentTable()
+
+            # Get the current cell
+            cell = table.cellAt(cursor)
+
+            # Insert a new row at the cell's position
+            table.insertRows(cell.row(),1)
+
+        def insertCol(self):
+
+            # Grab the cursor
+            cursor = self.text.textCursor()
+
+            # Grab the current table (we assume there is one, since
+            # this is checked before calling)
+            table = cursor.currentTable()
+
+            # Get the current cell
+            cell = table.cellAt(cursor)
+
+            # Insert a new row at the cell's position
+            table.insertColumns(cell.column(),1)
+
+
+First up, the `Table` class. This `QDialog` will allow the user to set initial configurations for the table he or she is about to insert. This includes the number of rows and columns, as well as cell spacing, the distance between individual cells (similar to `margin` in CSS), and cell padding, the distance between the outer edge of a cell and its inner text (comparable to `padding` in CSS). We visualize these settings with a few labels indicating what the user is configuring (e.g. "Rows:") and a `QSpinBox` each to input actual values for these parameters. Also, we create an "insert" button which the user presses to insert his or her table. We connect this `QPushButton`'s `clicked` signal to a slot function, `self.insert()`:
+
+    # Rows
+    rowsLabel = QtGui.QLabel("Rows: ",self)
+
+    self.rows = QtGui.QSpinBox(self)
+
+    # Columns
+    colsLabel = QtGui.QLabel("Columns",self)
+
+    self.cols = QtGui.QSpinBox(self)
+
+    # Cell spacing (distance between cells)
+    spaceLabel = QtGui.QLabel("Cell spacing",self)
+
+    self.space = QtGui.QSpinBox(self)
+
+    # Cell padding (distance between cell and inner text)
+    padLabel = QtGui.QLabel("Cell padding",self)
+
+    self.pad = QtGui.QSpinBox(self)
+
+    self.pad.setValue(10)
+
+    # Button
+    insertButton = QtGui.QPushButton("Insert",self)
+    insertButton.clicked.connect(self.insert)
+
+We followingly add all of these widgets to a layout and set it as our dialog's layout, as well as configuring all the other necessary window settings already discussed before (window size, title etc.). In `insert()`, we grab our parent's text cursor again as well as all of the values the user set for the various parameters on our dialog. Our cursor's method for inserting a table is `insertTable()`, which takes the number of rows, the number of columns and optionally a `QTextTableFormat` object. We can directly use the values we retrieved for row and column numbers, however we must use a `QTextTableFormat` object to make changes to cell padding and cell spacing. Therefore, we create a new `QTextTableFormat` and set the spacing and padding using `setCellPadding()` and `setCellSpacing()`, respectively. Finally, we use our cursor's `insertTable()` method to insert the table. We subsequently close this window. Note that if either the row or the column number is zero, `insertTable()` does nothing.
+
+
+        def insert(self):
+
+            cursor = self.parent.text.textCursor()
+
+            # Get the configurations
+            rows = self.rows.value()
+
+            cols = self.cols.value()
+
+            padding = self.pad.value()
+
+            space = self.space.value()
+
+            # Set the padding and spacing
+            fmt = QtGui.QTextTableFormat()
+
+            fmt.setCellPadding(padding)
+
+            fmt.setCellSpacing(space)
+
+            # Insert the new table
+            cursor.insertTable(rows,cols,fmt)
+
+            self.close()
