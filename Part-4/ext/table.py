@@ -67,18 +67,29 @@ class Table(QtGui.QDialog):
 
         cols = self.cols.value()
 
-        padding = self.pad.value()
+        if not rows or not cols:
 
-        space = self.space.value()
+            popup = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                                      "Parameter error",
+                                      "Row and column numbers may not be zero!",
+                                      QtGui.QMessageBox.Ok,
+                                      self)
+            popup.show()
 
-        # Set the padding and spacing
-        fmt = QtGui.QTextTableFormat()
-        
-        fmt.setCellPadding(padding)
+        else:
 
-        fmt.setCellSpacing(space)
+            padding = self.pad.value()
 
-        # Inser the new table
-        cursor.insertTable(rows,cols,fmt)
+            space = self.space.value()
 
-        self.close()
+            # Set the padding and spacing
+            fmt = QtGui.QTextTableFormat()
+            
+            fmt.setCellPadding(padding)
+
+            fmt.setCellSpacing(space)
+
+            # Inser the new table
+            cursor.insertTable(rows,cols,fmt)
+
+            self.close()
