@@ -513,7 +513,7 @@ And a slot function, `self.insertImage()`. In it, we open a `getOpenFileName` di
 
 ## Counting words
 
-For the next extension, a word-count dialog, we'll create a new class in a separate file again. So, in
+For the next extension, a word-count dialog that'll display the number of words and symbols in the document's selected and total text, we'll create a new class in a separate file again. So, in
 
 __`ext/wordcount.py`__:
 
@@ -629,7 +629,7 @@ __Below `initUI()`__:
 
         wc.show()
 
-This dialog will show the user the number of words and symbols currently under selection (if there is a selection) and also the number of words and symbols in the whole text. The UI is fairly simple. We create labels that indicate whether the numbers shown are for the current selection or the whole text, `currentLabel` and `totalLabel`, as well as two labels each that hold the strings "Words:" and "Symbols:", plus two labels each in which we'll show the actual numbers (these must be class members):
+As mentioned, this dialog will show the user the number of words and symbols currently under selection (if there is a selection) and also the number of words and symbols in the entire document. The UI is fairly simple. We create labels that indicate whether the numbers shown are for the current selection or the whole text, `currentLabel` and `totalLabel`, as well as two labels each that hold the strings "Words:" and "Symbols:", plus two labels each in which we'll show the actual numbers (these must be class members):
 
         # Word count in selection
         currentLabel = QtGui.QLabel("Current selection",self)

@@ -424,13 +424,10 @@ class Main(QtGui.QMainWindow):
 
             if self.toolbar.isVisible():
                 pos.setY(pos.y() + 45)
-                pass
 
             if self.formatbar.isVisible():
                 pos.setY(pos.y() + 45)
-                pass
-
-
+                
             # Move the menu to the new position
             menu.move(pos)
 
