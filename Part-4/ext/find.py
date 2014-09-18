@@ -10,7 +10,7 @@ class Find(QtGui.QDialog):
 
         self.parent = parent
 
-        self.lastMatch = None
+        self.lastStart = 0
 
         self.initUI()
  
@@ -30,11 +30,9 @@ class Find(QtGui.QDialog):
 
         # Normal mode - radio button
         self.normalRadio = QtGui.QRadioButton("Normal",self)
-        self.normalRadio.toggled.connect(self.normalMode)
 
         # Regular Expression Mode - radio button
-        self.regexRadio = QtGui.QRadioButton("RegEx",self)
-        self.regexRadio.toggled.connect(self.regexMode)
+        regexRadio = QtGui.QRadioButton("RegEx",self)
 
         # The field into which to type the query
         self.findField = QtGui.QTextEdit(self)
@@ -44,38 +42,18 @@ class Find(QtGui.QDialog):
         # queried text
         self.replaceField = QtGui.QTextEdit(self)
         self.replaceField.resize(250,50)
-
-        optionsLabel = QtGui.QLabel("Options: ",self)
         
-        # Case Sensitivity option
-        self.caseSens = QtGui.QCheckBox("Case sensitive",self)
-
-        # Whole Words option
-        self.wholeWords = QtGui.QCheckBox("Whole words",self)
-
-        # Layout the objects on the screen
         layout = QtGui.QGridLayout()
 
         layout.addWidget(self.findField,1,0,1,4)
         layout.addWidget(self.normalRadio,2,2)
-        layout.addWidget(self.regexRadio,2,3)
+        layout.addWidget(regexRadio,2,3)
         layout.addWidget(findButton,2,0,1,2)
         
         layout.addWidget(self.replaceField,3,0,1,4)
         layout.addWidget(replaceButton,4,0,1,2)
         layout.addWidget(allButton,4,2,1,2)
 
-        # Add some spacing
-        spacer = QtGui.QWidget(self)
-
-        spacer.setFixedSize(0,10)
-        
-        layout.addWidget(spacer,5,0)
-
-        layout.addWidget(optionsLabel,6,0)
-        layout.addWidget(self.caseSens,6,1)
-        layout.addWidget(self.wholeWords,6,2)
-        
         self.setGeometry(300,300,360,250)
         self.setWindowTitle("Find and Replace")
         self.setLayout(layout)
@@ -88,46 +66,49 @@ class Find(QtGui.QDialog):
         # Grab the parent's text
         text = self.parent.text.toPlainText()
 
-        # And the thing to find
+        # And the text to find
         query = self.findField.toPlainText()
 
-        # If the 'Whole Words' checkbox is checked, we need to append
-        # and prepend a non-alphanumeric character
-        if self.wholeWords.isChecked():
-            query = r'\W' + query + r'\W'
+        if self.normalRadio.isChecked():
 
-        # By default regexes are case sensitive but usually a search isn't
-        # case sensitive by default, so we need to switch this around here
-        flags = 0 if self.caseSens.isChecked() else re.I
+            # Use normal string search to find the query from the
+            # last starting position
+            self.lastStart = text.find(query,self.lastStart + 1)
 
-        # Compile the pattern
-        pattern = re.compile(query,flags)
+            # If the find() method didn't return -1 (not found)
+            if self.lastStart >= 0:
 
-        # If the last match was successful, start at position after the last
-        # match's start, else at 0
-        start = self.lastMatch.start() + 1 if self.lastMatch else 0
-
-        # The actual search
-        self.lastMatch = pattern.search(text,start)
-
-        if self.lastMatch:
-
-            start = self.lastMatch.start()
-            end = self.lastMatch.end()
-
-            # If 'Whole words' is checked, the selection would include the two
-            # non-alphanumeric characters we included in the search, which need
-            # to be removed before marking them.
-            if self.wholeWords.isChecked():
-                start += 1
-                end -= 1
+                end = self.lastStart + len(query)
                 
-            self.moveCursor(start,end)
+                self.moveCursor(self.lastStart,end)
+
+            else:
+
+                # Make the next search start from the begining again
+                self.lastStart = 0
+                
+                self.parent.text.moveCursor(QtGui.QTextCursor.End)
 
         else:
 
-            # We set the cursor to the end if the search was unsuccessful
-            self.parent.text.moveCursor(QtGui.QTextCursor.End)
+            # Compile the pattern
+            pattern = re.compile(query)
+
+            # The actual search
+            match = pattern.search(text,self.lastStart + 1)
+
+            if match:
+
+                self.lastStart = match.start()
+                
+                self.moveCursor(self.lastStart,match.end())
+
+            else:
+
+                self.lastStart = 0
+                
+                # We set the cursor to the end if the search was unsuccessful
+                self.parent.text.moveCursor(QtGui.QTextCursor.End)
 
     def replace(self):
 
@@ -135,7 +116,7 @@ class Find(QtGui.QDialog):
         cursor = self.parent.text.textCursor()
 
         # Security
-        if self.lastMatch and cursor.hasSelection():
+        if cursor.hasSelection():
 
             # We insert the new text, which will override the selected
             # text
@@ -146,34 +127,14 @@ class Find(QtGui.QDialog):
 
     def replaceAll(self):
 
-        # Set lastMatch to None so that the search
-        # starts from the beginning of the document
-        self.lastMatch = None
+        self.lastStart = 0
 
-        # Initial find() call so that lastMatch is
-        # potentially not None anymore
         self.find()
 
-        # Replace and find until find is None again
-        while self.lastMatch:
+        # Replace and find until self.lastStart is 0 again
+        while self.lastStart:
             self.replace()
             self.find()
-
-    def regexMode(self):
-
-        # First uncheck the checkboxes
-        self.caseSens.setChecked(False)
-        self.wholeWords.setChecked(False)
-
-        # Then disable them (gray them out)
-        self.caseSens.setEnabled(False)
-        self.wholeWords.setEnabled(False)
-
-    def normalMode(self):
-
-        # Enable checkboxes (un-gray them)
-        self.caseSens.setEnabled(True)
-        self.wholeWords.setEnabled(True)
 
     def moveCursor(self,start,end):
 
