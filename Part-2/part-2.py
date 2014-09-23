@@ -101,101 +101,93 @@ class Main(QtGui.QMainWindow):
         self.addToolBarBreak()
 
     def initFormatbar(self):
+        
+        fontBox = QtGui.QFontComboBox(self)
+        fontBox.currentFontChanged.connect(lambda font: self.text.setCurrentFont(font))
 
-      fontBox = QtGui.QFontComboBox(self)
-      fontBox.currentFontChanged.connect(self.fontFamily)
+        fontSize = QtGui.QSpinBox(self)
 
-      fontSize = QtGui.QComboBox(self)
-      fontSize.setEditable(True)
+        # Will display " pt" after each value
+        fontSize.setSuffix(" pt")
 
-      # Minimum number of chars displayed
-      fontSize.setMinimumContentsLength(3)
+        fontSize.valueChanged.connect(lambda size: self.text.setFontPointSize(size))
 
-      fontSize.activated.connect(self.fontSize)
+        fontSize.setValue(14)
 
-      # Typical font sizes
-      fontSizes = ['6','7','8','9','10','11','12','13','14',
-                   '15','16','18','20','22','24','26','28',
-                   '32','36','40','44','48','54','60','66',
-                   '72','80','88','96']
+        fontColor = QtGui.QAction(QtGui.QIcon("icons/font-color.png"),"Change font color",self)
+        fontColor.triggered.connect(self.fontColorChanged)
 
-      for i in fontSizes:
-          fontSize.addItem(i)
+        backColor = QtGui.QAction(QtGui.QIcon("icons/highlight.png"),"Change background color",self)
+        backColor.triggered.connect(self.highlight)
 
-      fontColor = QtGui.QAction(QtGui.QIcon("icons/font-color.png"),"Change font color",self)
-      fontColor.triggered.connect(self.fontColor)
+        boldAction = QtGui.QAction(QtGui.QIcon("icons/bold.png"),"Bold",self)
+        boldAction.triggered.connect(self.bold)
 
-      backColor = QtGui.QAction(QtGui.QIcon("icons/highlight.png"),"Change background color",self)
-      backColor.triggered.connect(self.highlight)
+        italicAction = QtGui.QAction(QtGui.QIcon("icons/italic.png"),"Italic",self)
+        italicAction.triggered.connect(self.italic)
 
-      boldAction = QtGui.QAction(QtGui.QIcon("icons/bold.png"),"Bold",self)
-      boldAction.triggered.connect(self.bold)
+        underlAction = QtGui.QAction(QtGui.QIcon("icons/underline.png"),"Underline",self)
+        underlAction.triggered.connect(self.underline)
 
-      italicAction = QtGui.QAction(QtGui.QIcon("icons/italic.png"),"Italic",self)
-      italicAction.triggered.connect(self.italic)
+        strikeAction = QtGui.QAction(QtGui.QIcon("icons/strike.png"),"Strike-out",self)
+        strikeAction.triggered.connect(self.strike)
 
-      underlAction = QtGui.QAction(QtGui.QIcon("icons/underline.png"),"Underline",self)
-      underlAction.triggered.connect(self.underline)
+        superAction = QtGui.QAction(QtGui.QIcon("icons/superscript.png"),"Superscript",self)
+        superAction.triggered.connect(self.superScript)
 
-      strikeAction = QtGui.QAction(QtGui.QIcon("icons/strike.png"),"Strike-out",self)
-      strikeAction.triggered.connect(self.strike)
+        subAction = QtGui.QAction(QtGui.QIcon("icons/subscript.png"),"Subscript",self)
+        subAction.triggered.connect(self.subScript)
 
-      superAction = QtGui.QAction(QtGui.QIcon("icons/superscript.png"),"Superscript",self)
-      superAction.triggered.connect(self.superScript)
+        alignLeft = QtGui.QAction(QtGui.QIcon("icons/align-left.png"),"Align left",self)
+        alignLeft.triggered.connect(self.alignLeft)
 
-      subAction = QtGui.QAction(QtGui.QIcon("icons/subscript.png"),"Subscript",self)
-      subAction.triggered.connect(self.subScript)
+        alignCenter = QtGui.QAction(QtGui.QIcon("icons/align-center.png"),"Align center",self)
+        alignCenter.triggered.connect(self.alignCenter)
 
-      alignLeft = QtGui.QAction(QtGui.QIcon("icons/align-left.png"),"Align left",self)
-      alignLeft.triggered.connect(self.alignLeft)
+        alignRight = QtGui.QAction(QtGui.QIcon("icons/align-right.png"),"Align right",self)
+        alignRight.triggered.connect(self.alignRight)
 
-      alignCenter = QtGui.QAction(QtGui.QIcon("icons/align-center.png"),"Align center",self)
-      alignCenter.triggered.connect(self.alignCenter)
+        alignJustify = QtGui.QAction(QtGui.QIcon("icons/align-justify.png"),"Align justify",self)
+        alignJustify.triggered.connect(self.alignJustify)
 
-      alignRight = QtGui.QAction(QtGui.QIcon("icons/align-right.png"),"Align right",self)
-      alignRight.triggered.connect(self.alignRight)
+        indentAction = QtGui.QAction(QtGui.QIcon("icons/indent.png"),"Indent Area",self)
+        indentAction.setShortcut("Ctrl+Tab")
+        indentAction.triggered.connect(self.indent)
 
-      alignJustify = QtGui.QAction(QtGui.QIcon("icons/align-justify.png"),"Align justify",self)
-      alignJustify.triggered.connect(self.alignJustify)
+        dedentAction = QtGui.QAction(QtGui.QIcon("icons/dedent.png"),"Dedent Area",self)
+        dedentAction.setShortcut("Shift+Tab")
+        dedentAction.triggered.connect(self.dedent)
 
-      indentAction = QtGui.QAction(QtGui.QIcon("icons/indent.png"),"Indent Area",self)
-      indentAction.setShortcut("Ctrl+Tab")
-      indentAction.triggered.connect(self.indent)
+        self.formatbar = self.addToolBar("Format")
 
-      dedentAction = QtGui.QAction(QtGui.QIcon("icons/dedent.png"),"Dedent Area",self)
-      dedentAction.setShortcut("Shift+Tab")
-      dedentAction.triggered.connect(self.dedent)
+        self.formatbar.addWidget(fontBox)
+        self.formatbar.addWidget(fontSize)
 
-      self.formatbar = self.addToolBar("Format")
+        self.formatbar.addSeparator()
 
-      self.formatbar.addWidget(fontBox)
-      self.formatbar.addWidget(fontSize)
+        self.formatbar.addAction(fontColor)
+        self.formatbar.addAction(backColor)
 
-      self.formatbar.addSeparator()
+        self.formatbar.addSeparator()
 
-      self.formatbar.addAction(fontColor)
-      self.formatbar.addAction(backColor)
+        self.formatbar.addAction(boldAction)
+        self.formatbar.addAction(italicAction)
+        self.formatbar.addAction(underlAction)
+        self.formatbar.addAction(strikeAction)
+        self.formatbar.addAction(superAction)
+        self.formatbar.addAction(subAction)
 
-      self.formatbar.addSeparator()
+        self.formatbar.addSeparator()
 
-      self.formatbar.addAction(boldAction)
-      self.formatbar.addAction(italicAction)
-      self.formatbar.addAction(underlAction)
-      self.formatbar.addAction(strikeAction)
-      self.formatbar.addAction(superAction)
-      self.formatbar.addAction(subAction)
+        self.formatbar.addAction(alignLeft)
+        self.formatbar.addAction(alignCenter)
+        self.formatbar.addAction(alignRight)
+        self.formatbar.addAction(alignJustify)
 
-      self.formatbar.addSeparator()
+        self.formatbar.addSeparator()
 
-      self.formatbar.addAction(alignLeft)
-      self.formatbar.addAction(alignCenter)
-      self.formatbar.addAction(alignRight)
-      self.formatbar.addAction(alignJustify)
-
-      self.formatbar.addSeparator()
-
-      self.formatbar.addAction(indentAction)
-      self.formatbar.addAction(dedentAction)
+        self.formatbar.addAction(indentAction)
+        self.formatbar.addAction(dedentAction)
 
 
     def initMenubar(self):
@@ -354,13 +346,7 @@ class Main(QtGui.QMainWindow):
         # Insert list with numbers
         cursor.insertList(QtGui.QTextListFormat.ListDecimal)
 
-    def fontFamily(self,font):
-        self.text.setCurrentFont(font)
-
-    def fontSize(self, fontsize):
-        self.text.setFontPointSize(int(fontsize))
-
-    def fontColor(self):
+    def fontColorChanged(self):
 
         # Get a color from the text dialog
         color = QtGui.QColorDialog.getColor()

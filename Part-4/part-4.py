@@ -139,29 +139,19 @@ class Main(QtGui.QMainWindow):
     def initFormatbar(self):
 
         fontBox = QtGui.QFontComboBox(self)
-        fontBox.currentFontChanged.connect(self.fontFamily)
+        fontBox.currentFontChanged.connect(lambda font: self.text.setCurrentFont(font))
 
-        fontSize = QtGui.QComboBox(self)
-        fontSize.setEditable(True)
+        fontSize = QtGui.QSpinBox(self)
 
-        # Minimum number of chars displayed
-        fontSize.setMinimumContentsLength(3)
+        # Will display " pt" after each value
+        fontSize.setSuffix(" pt")
 
-        fontSize.activated.connect(self.fontSize)
+        fontSize.valueChanged.connect(lambda size: self.text.setFontPointSize(size))
 
-        # Typical font sizes
-        fontSizes = ['6','7','8','9','10','11','12','13','14',
-                     '15','16','18','20','22','24','26','28',
-                     '32','36','40','44','48','54','60','66',
-                     '72','80','88','96']
-
-        for i in fontSizes:
-            fontSize.addItem(i)
-
-        fontSize.setCurrentIndex(12)
+        fontSize.setValue(14)
 
         fontColor = QtGui.QAction(QtGui.QIcon("icons/font-color.png"),"Change font color",self)
-        fontColor.triggered.connect(self.fontColor)
+        fontColor.triggered.connect(self.fontColorChanged)
 
         boldAction = QtGui.QAction(QtGui.QIcon("icons/bold.png"),"Bold",self)
         boldAction.triggered.connect(self.bold)
@@ -617,13 +607,7 @@ class Main(QtGui.QMainWindow):
 
                 cursor.insertImage(image,filename)
 
-    def fontFamily(self,font):
-        self.text.setCurrentFont(font)
-
-    def fontSize(self, fontsize):
-        self.text.setFontPointSize(int(fontsize))
-
-    def fontColor(self):
+    def fontColorChanged(self):
 
         # Get a color from the text dialog
         color = QtGui.QColorDialog.getColor()
