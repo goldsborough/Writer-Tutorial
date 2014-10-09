@@ -21,3 +21,7 @@ Part 2: http://www.binpress.com/tutorial/developing-a-pyqt-text-editor-part-2/14
 Part 3: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-3/147
 
 Part 4: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-4/148
+
+##Updates
+
+You can check for any updates or added features in the non-tutorial *Writer* repository, [here](https://github.com/goldsborough/Writer). After a certain accumulation of updates/features a new tutorial part may follow. 
