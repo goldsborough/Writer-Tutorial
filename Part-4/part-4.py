@@ -716,14 +716,16 @@ class Main(QtGui.QMainWindow):
             # Store the current line/block number
             temp = cursor.blockNumber()
 
-            # Move to the selection's last line
-            cursor.setPosition(cursor.selectionEnd())
+            # Move to the selection's end
+            cursor.setPosition(cursor.anchor())
 
             # Calculate range of selection
             diff = cursor.blockNumber() - temp
 
-            # Iterate over lines
-            for n in range(diff + 1):
+            direction = QtGui.QTextCursor.Up if diff > 0 else QtGui.QTextCursor.Down
+
+            # Iterate over lines (diff absolute value)
+            for n in range(abs(diff) + 1):
 
                 # Move to start of each line
                 cursor.movePosition(QtGui.QTextCursor.StartOfLine)
@@ -732,7 +734,7 @@ class Main(QtGui.QMainWindow):
                 cursor.insertText("\t")
 
                 # And move back up
-                cursor.movePosition(QtGui.QTextCursor.Up)
+                cursor.movePosition(direction)
 
         # If there is no selection, just insert a tab
         else:
@@ -771,18 +773,20 @@ class Main(QtGui.QMainWindow):
             temp = cursor.blockNumber()
 
             # Move to the selection's last line
-            cursor.setPosition(cursor.selectionEnd())
+            cursor.setPosition(cursor.anchor())
 
             # Calculate range of selection
             diff = cursor.blockNumber() - temp
 
+            direction = QtGui.QTextCursor.Up if diff > 0 else QtGui.QTextCursor.Down
+
             # Iterate over lines
-            for n in range(diff + 1):
+            for n in range(abs(diff) + 1):
 
                 self.handleDedent(cursor)
 
                 # Move up
-                cursor.movePosition(QtGui.QTextCursor.Up)
+                cursor.movePosition(direction)
 
         else:
             self.handleDedent(cursor)
