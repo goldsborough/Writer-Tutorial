@@ -485,7 +485,7 @@ class Main(QtGui.QMainWindow):
     def alignJustify(self):
         self.text.setAlignment(Qt.AlignJustify)
 
-        def indent(self):
+    def indent(self):
 
         # Grab the cursor
         cursor = self.text.textCursor()
