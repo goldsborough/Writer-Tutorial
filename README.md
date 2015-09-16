@@ -22,6 +22,10 @@ Part 3: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-3
 
 Part 4: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-4/148
 
+##PyQt5
+
+Thanks to Jock2 the entire tutorial series is now ported to PyQt5 (see the PyQt5 folder).
+
 ##Updates
 
 You can check for any updates or added features in the non-tutorial *Writer* repository, [here](https://github.com/goldsborough/Writer). After a certain accumulation of updates/features a new tutorial part may follow. 
