@@ -535,7 +535,8 @@ class Main(QtGui.QMainWindow):
         if self.filename:
             
             # Append extension if not there yet
-            if not self.filename.endswith(".writer"):
+            stri = str(self.filename)
+            if not stri.endswith(".writer"):
               self.filename += ".writer"
 
             # We just store the contents of the text file along with the
