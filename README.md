@@ -14,13 +14,13 @@ This repository holds the code for my tutorial series on __*Building a text edit
 
 ## Tutorials
 
-Part 1: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-one/143
+[Part 1](https://web.archive.org/web/20170611221525/http://www.binpress.com:80/tutorial/building-a-text-editor-with-pyqt-part-one/143)
 
-Part 2: http://www.binpress.com/tutorial/developing-a-pyqt-text-editor-part-2/145
+[Part 2](https://web.archive.org/web/20170611221525/http://www.binpress.com:80/tutorial/developing-a-pyqt-text-editor-part-2/145)
 
-Part 3: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-3/147
+[Part 3](https://web.archive.org/web/20170611221525/http://www.binpress.com:80/tutorial/building-a-text-editor-with-pyqt-part-3/147)
 
-Part 4: http://www.binpress.com/tutorial/building-a-text-editor-with-pyqt-part-4/148
+[Part 4](https://web.archive.org/web/20170611221525/http://www.binpress.com:80/tutorial/building-a-text-editor-with-pyqt-part-4/148)
 
 ## PyQt5
 
@@ -28,4 +28,4 @@ Thanks to Jock2 the entire tutorial series is now ported to PyQt5 (see the PyQt5
 
 ## Updates
 
-You can check for any updates or added features in the non-tutorial *Writer* repository, [here](https://github.com/goldsborough/Writer). After a certain accumulation of updates/features a new tutorial part may follow. 
+You can check for any updates or added features in the non-tutorial *Writer* repository, [here](https://github.com/goldsborough/Writer).
